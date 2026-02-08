@@ -1,0 +1,38 @@
+{
+  "name": "@vforsh/flux",
+  "version": "0.1.0",
+  "description": "Bun-based CLI for Black Forest Labs FLUX image generation and editing",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vforsh/flux.git"
+  },
+  "homepage": "https://github.com/vforsh/flux#readme",
+  "bugs": {
+    "url": "https://github.com/vforsh/flux/issues"
+  },
+  "type": "module",
+  "bin": {
+    "flux": "bin/flux"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "flux": "bun run bin/flux",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "picocolors": "^1.1.1",
+    "zod": "^4.3.6"
+  }
+}
