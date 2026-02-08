@@ -110,6 +110,58 @@ Footnote:
 - **API key**: avoid passing secrets via flags; use env/config/stdin.
 - **Signed URL**: `result.sample` is typically short-lived; download immediately.
 
+## Editing best practices (Kontext)
+
+Applies to `flux edit` with Kontext models (`flux-kontext-pro`, `flux-kontext-max`).
+
+### Prompt structure
+
+- **Max 512 tokens**. Be explicit but concise.
+- **Be specific**: exact color names, detailed descriptions, clear verbs.
+- **Preserve intentionally**: state what must stay unchanged.
+  - Bad: `"Change to daytime"`
+  - Good: `"Change to daytime while maintaining the same style of the painting"`
+- **Name subjects directly**: use descriptive identifiers, not pronouns.
+  - Bad: `"Transform her into a Viking"`
+  - Good: `"Transform the woman into a viking warrior while preserving her exact facial features, eye color, and facial expression"`
+- **Choose verbs carefully**: "transform" signals complete replacement; "change the clothes to…" keeps identity.
+- **Control composition**: when changing backgrounds, add `"keeping the person in the exact same position, scale, and pose. Maintain identical camera angle, framing, and perspective."`
+
+### Text editing in images
+
+- Use quotation marks: `Replace '[original text]' with '[new text]'`
+- Case formatting matters.
+- Works on signs, posters, labels without full image recreation.
+
+### Annotation boxes
+
+Bright colored boxes drawn on the input image act as spatial references.
+- The model recognizes them automatically and removes them from output.
+- Useful for targeted text repositioning, resizing, or pointing at a specific region.
+- Example prompt: `"Add hats in the boxes"`
+
+### Iterative editing
+
+- Kontext excels at character consistency across multiple sequential edits.
+- Break complex transformations into steps for better control.
+- Start simple; test basic edits before layering complexity.
+
+### Style transfer
+
+- Name specific styles or reference known artists/art movements — not generic terms.
+- Detail visual characteristics when style names are insufficient.
+- For dramatic style shifts, use transformative sequences (multiple passes).
+- Precise descriptions preserve structure: `"Convert to pencil sketch with natural graphite lines, cross-hatching, and visible paper texture"`
+
+### Common pitfalls
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| Identity loss | vague "transform" prompt | use targeted verbs; explicitly list features to preserve |
+| Subject repositioned | background change without anchoring | add position/scale/framing preservation clause |
+| Style drift | simple prompt without style anchoring | add `"while maintaining the same style"` |
+| Wrong text case | case not specified | match exact casing in prompt |
+
 ## Common errors (exit codes)
 
 - `2`: invalid args/validation
