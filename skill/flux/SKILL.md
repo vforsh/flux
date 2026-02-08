@@ -1,106 +1,120 @@
 ---
 name: flux
-description: Использование CLI `flux` (@vforsh/flux) для генерации и редактирования изображений через Black Forest Labs (BFL) FLUX API. Используй, когда нужно: настроить ключ BFL, выбрать модель, сгенерировать изображение, отредактировать по референсам, сделать inpaint/outpaint, дождаться результата, получить credits, работать в --plain/--json режимах, разрулить типовые API ошибки (402/403/429).
+description: Usage guide for the `flux` CLI (@vforsh/flux) to generate and edit images via Black Forest Labs (BFL) FLUX API. Use for setting up the BFL API key, choosing models, generating images, editing with references, inpaint/outpaint, waiting for results, checking credits, using --plain/--json output, and handling common API errors (402/403/429).
 ---
 
 # Flux CLI (BFL / FLUX)
 
-CLI для генерации и редактирования изображений через BFL FLUX API.
+CLI to generate and edit images via the BFL FLUX API.
 
-## Быстрый старт
+## Quick start
 
-1) Ключ:
+1) API key:
 
 - env:
   - `export BFL_API_KEY="..."`
-- или сохранить локально (читает из stdin; не светить в истории shell):
+- or save locally (reads from stdin; avoid shell history leaks):
   - `echo "$BFL_API_KEY" | flux config set apiKey`
 
-2) Генерация:
+2) Generate:
 
 - `flux gen "a cat astronaut" --model flux-2-pro --width 1024 --height 1024 -o out/`
 
-3) Редактирование по референсу:
+3) Edit with a reference image:
 
 - `flux edit "make it sunset lighting" --model flux-2-pro --input ./in.jpg -o out/`
 
-## Команды
+## Commands
 
 `flux gen [prompt]`
 - text-to-image
-- prompt можно передать аргументом, или `-` / stdin
+- prompt can be positional, or `-` / stdin
 
 `flux edit [prompt] --input <path|url|base64> [--input ...]`
-- image-to-image edit по prompt + 1..N входных изображений (base + refs)
+- image editing using a prompt + 1..N input images (base + refs)
 
 `flux fill [prompt] --image <path|url|base64> [--mask <path|url|base64>]`
-- inpaint (маска отдельно или alpha канал)
+- inpaint (explicit mask image, or alpha channel)
 
 `flux expand [prompt] --image <path|url|base64> [--top/--bottom/--left/--right <px>]`
-- outpaint (расширение холста пикселями по сторонам)
+- outpaint (expand canvas by pixels on any side)
 
 `flux result <id> [--out <path|->]`
-- статус/результат по id
-- если `status=Ready` и задан `--out`, скачает результат
+- fetch status/result by id
+- if `status=Ready` and `--out` is set, downloads the result
 
 `flux wait <id> [--polling-url <url>] [--out <path|->]`
-- ждать до `Ready`/ошибки, опционально скачать результат
+- wait until `Ready`/error; optionally download the result
 
 `flux credits`
-- показать остаток credits
+- show remaining credits
 
 `flux models`
-- список ключей моделей, которые CLI знает “из коробки”
+- list model keys supported by the CLI
 
 `flux config path|get|set|unset`
-- локальная конфигурация (в т.ч. сохранение ключа через stdin)
+- local config (including saving API key via stdin)
 
-## Глобальные флаги
+## Global flags
 
-- `--json`: один JSON объект в stdout (для скриптов)
-- `--plain`: стабильный “плоский” вывод (пути/ids)
-- `-q, --quiet`: меньше логов
-- `-v, --verbose`: диагностика в stderr (без секретов)
-- `--endpoint <host>`: API host (по умолчанию `api.bfl.ai`)
-- `--region <us|eu|global>`: шорткат host
-- `--timeout <ms>`: таймаут
-- `--retries <n>`: ретраи для 429/5xx
-- `--out-dir <dir>`: дефолтная папка для сохранения результатов
+- `--json`: single JSON object to stdout (for scripts)
+- `--plain`: stable line output (paths/ids)
+- `-q, --quiet`: less logging
+- `-v, --verbose`: diagnostics to stderr (no secrets)
+- `--endpoint <host>`: API host (default `api.bfl.ai`)
+- `--region <us|eu|global>`: endpoint shortcut
+- `--timeout <ms>`: timeout
+- `--retries <n>`: retries for 429/5xx
+- `--out-dir <dir>`: default output directory
 
-## Основные флаги генерации/редактирования
+## Common gen/edit flags
 
-- `--model <key>`: модель (см. `flux models`)
+- `--model <key>`: model key (see `flux models`)
 - `--seed <n>`
-- `--safety <n>`: safety_tolerance (диапазон зависит от модели)
+- `--safety <n>`: safety_tolerance (range depends on model)
 - `--format <jpeg|png>`: output_format
-- `-o, --out <path|->`: файл/директория или `-` для stdout
-- `--no-wait`: не ждать; вывести `id` (+ `pollingUrl` в `--json`)
+- `-o, --out <path|->`: file/dir or `-` for stdout
+- `--no-wait`: submit only; print `id` (+ `pollingUrl` in `--json`)
 - `--poll-interval <ms>`
 
 Advanced (escape hatch):
-- `--body <json|@file>`: сырой request body (когда нужен полный контроль)
+- `--body <json|@file>`: raw request body (full control)
 
-## Модели (ключи)
+## Models (keys)
 
-Официальные ключи меняются; ориентир: `flux models`.
+Official model lineup evolves; use `flux models` for the current list.
 
-Встроенные сейчас:
-- FLUX.2: `flux-2-pro`, `flux-2-flex`, `flux-2-max`, `flux-2-klein-4b`, `flux-2-klein-9b`
-- Kontext: `flux-kontext-pro`, `flux-kontext-max`
-- FLUX 1.1: `flux-pro-1.1`, `flux-pro-1.1-ultra`
-- Tools: `flux-pro-1.0-fill`, `flux-pro-1.0-expand`
-- Passthrough (через `--body`): `flux-dev`, `flux-pro`
+Built-in keys, when to use them, and pricing tier (rule of thumb; pricing can change):
 
-## Заметки по безопасности/надежности
+| Model key | Best for | Pricing tier | Notes |
+| --- | --- | --- | --- |
+| `flux-2-klein-4b` | quick drafts; high-volume generation | cheap | MP-based |
+| `flux-2-klein-9b` | better drafts; still fast iteration | cheap-to-balanced | MP-based |
+| `flux-2-pro` | default pick; production workflows; general-purpose gen/edit | balanced | MP-based; edits typically cost more than T2I |
+| `flux-2-flex` | maximum quality with control knobs | premium | MP-based; supports `--steps`/`--guidance`; image editing is the most expensive tier in FLUX.2 |
+| `flux-2-max` | final assets; quality-first; grounding search | premium/most expensive | MP-based |
+| `flux-kontext-pro` | controlled edits/variations with multiple references | balanced | credits per call |
+| `flux-kontext-max` | stronger Kontext edits; quality-first | expensive | credits per call |
+| `flux-pro-1.1` | FLUX 1.1 behavior; compatibility workflows | balanced | credits per call |
+| `flux-pro-1.1-ultra` | Ultra mode; aspect-ratio driven generation; optional raw look | expensive | credits per call |
+| `flux-pro-1.0-fill` | inpainting (mask/alpha) | expensive | credits per call (tool endpoint) |
+| `flux-pro-1.0-expand` | outpainting (extend canvas) | mid-to-expensive | tool endpoint; check returned `cost`/credits |
+| `flux-dev` | passthrough via `--body` when you know the exact API shape | cheap | credits per call; check returned `cost` |
+| `flux-pro` | passthrough via `--body` when you know the exact API shape | varies | check returned `cost`/credits |
 
-- **Ключ**: не передавать секреты флагами; использовать env/config/stdin.
-- **Signed URL**: `result.sample` обычно короткоживущий; скачивать сразу.
+Footnote:
+- **MP-based**: cost scales with output size in *megapixels* (width * height / 1,000,000). Larger images cost more.
 
-## Типовые ошибки (exit codes)
+## Safety / reliability notes
 
-- `2`: неправильные аргументы/валидация
-- `3`: нет ключа или `403`
-- `4`: `402` (нет credits)
+- **API key**: avoid passing secrets via flags; use env/config/stdin.
+- **Signed URL**: `result.sample` is typically short-lived; download immediately.
+
+## Common errors (exit codes)
+
+- `2`: invalid args/validation
+- `3`: missing key or `403`
+- `4`: `402` (insufficient credits)
 - `5`: `429` (rate limit)
 - `6`: moderation
-- `7`: прочие API/таск ошибки
+- `7`: other API/task errors
